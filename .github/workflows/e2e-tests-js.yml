@@ -1,0 +1,61 @@
+name: E2E Tests - Playwright (JavaScript)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-node-playwright-${{ hashFiles('package-lock.json', 'yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-playwright-
+      
+      - name: Install dependencies
+        run: |
+          if [ -f "yarn.lock" ]; then
+            yarn install --frozen-lockfile
+          else
+            npm ci
+          fi
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Build project
+        run: |
+          if [ -f "yarn.lock" ]; then
+            yarn build --if-present || true
+          else
+            npm run build --if-present || true
+          fi
+        continue-on-error: true
+      
+      - name: Run E2E Tests
+        run: npx playwright test e2e/components/Accordion/Accordion-test.avt.e2e.js e2e/components/Accordion/Accordion-test.e2e.js e2e/components/Breadcrumb/Breadcrumb-test.avt.e2e.js e2e/components/Checkbox/Checkbox-test.avt.e2e.js e2e/components/ComboButton/ComboButton-test.avt.e2e.js e2e/components/ContainedList/ContainedList-test.avt.e2e.js e2e/components/ContentSwitcher/ContentSwitcher-test.avt.e2e.js e2e/components/CopyButton/CopyButton-test.avt.e2e.js e2e/components/IconButton/IconButton-test.avt.e2e.js e2e/components/InteractiveTag/InteractiveTag-test.avt.e2e.js e2e/components/InteractiveTag/InteractiveTag-test.e2e.js e2e/components/Popover/Popover-test.avt.e2e.js e2e/components/Tag/Tag-test.avt.e2e.js e2e/components/Tag/Tag-test.e2e.js e2e/components/TimePicker/TimePicker-test.avt.e2e.js e2e/components/TimePicker/TimePicker-test.e2e.js e2e/components/Toggletip/Toggletip-test.avt.e2e.js e2e/components/Toggletip/Toggletip-test.e2e.js
+      
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
