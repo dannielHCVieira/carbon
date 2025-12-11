@@ -1,9 +1,10 @@
 name: Nightly Release
 
 on:
-  schedule:
+  workflow_dispatch:
+  #schedule:
     # Run every week day at 01:00 (24hr format)
-    - cron: '0 1 * * 1-5'
+    #- cron: '0 1 * * 1-5'
 
 jobs:
   release:
